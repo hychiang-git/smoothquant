@@ -309,6 +309,35 @@ def quantize_falcon(
             )
     return model
 
+def quantize_pythia(
+    model, weight_quant="per_channel", act_quant="per_token", quantize_bmm_input=True
+):
+    from transformers.models.gpt_neox.modeling_gpt_neox import (
+        GPTNeoXAttention,
+        GPTNeoXMLP,
+    )
+
+    for name, m in model.named_modules():
+        if isinstance(m, GPTNeoXMLP):
+            m.dense_h_to_4h = W8A8Linear.from_float(
+                m.dense_h_to_4h, weight_quant=weight_quant, act_quant=act_quant
+            )
+            m.dense_4h_to_h = W8A8Linear.from_float(
+                m.dense_4h_to_h, weight_quant=weight_quant, act_quant=act_quant
+            )
+        elif isinstance(m, GPTNeoXAttention):
+            # Her we simulate quantizing BMM inputs by quantizing the output of q_proj, k_proj, v_proj
+            m.query_key_value = W8A8Linear.from_float(
+                m.query_key_value,
+                weight_quant=weight_quant,
+                act_quant=act_quant,
+                quantize_output=quantize_bmm_input,
+            )
+            m.dense = W8A8Linear.from_float(
+                m.dense, weight_quant=weight_quant, act_quant=act_quant
+            )
+    return model
+
 
 def quantize_model(
     model, weight_quant="per_channel", act_quant="per_token", quantize_bmm_input=False
@@ -318,6 +347,7 @@ def quantize_model(
     from transformers.models.mistral.modeling_mistral import MistralPreTrainedModel
     from transformers.models.mixtral.modeling_mixtral import MixtralPreTrainedModel
     from transformers.models.falcon.modeling_falcon import FalconPreTrainedModel
+    from transformers.models.gpt_neox.modeling_gpt_neox import GPTNeoXForCausalLM
 
     if isinstance(model, OPTPreTrainedModel):
         return quantize_opt(
@@ -342,6 +372,13 @@ def quantize_model(
         )
     elif isinstance(model, FalconPreTrainedModel):
         return quantize_falcon(
+            model,
+            weight_quant=weight_quant,
+            act_quant=act_quant,
+            quantize_bmm_input=quantize_bmm_input,
+        )
+    elif isinstance(model, GPTNeoXForCausalLM):
+        return quantize_pythia(
             model,
             weight_quant=weight_quant,
             act_quant=act_quant,

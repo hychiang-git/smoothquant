@@ -1,5 +1,7 @@
 import torch
 import torch.nn as nn
+import random
+import numpy as np
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from smoothquant.smooth import smooth_lm
 from smoothquant.fake_quant import quantize_model
@@ -61,14 +63,34 @@ class Evaluator:
 
         return torch.exp(torch.stack(nlls).sum() / (n_samples * 2048))
 
+torch.manual_seed(0)
+random.seed(0)
+np.random.seed(0)
 
-tokenizer = AutoTokenizer.from_pretrained(model_path)
+from transformers import GPTNeoXForCausalLM
+
+# model = GPTNeoXForCausalLM.from_pretrained(
+# "EleutherAI/pythia-2.8b-deduped",
+# revision="step3000",
+# device_map='cuda'
+# )
+
+# tokenizer = AutoTokenizer.from_pretrained(
+# "EleutherAI/pythia-2.8b-deduped",
+# revision="step3000",
+# device_map='cuda'
+# )
+
+tokenizer = AutoTokenizer.from_pretrained("EleutherAI/pythia-2.8b", device_map='cuda')
+model = AutoModelForCausalLM.from_pretrained("EleutherAI/pythia-2.8b", device_map='cuda')
+
+# tokenizer = AutoTokenizer.from_pretrained(model_path)
 dataset = load_dataset("wikitext", "wikitext-2-raw-v1", split="test")
 evaluator = Evaluator(dataset, tokenizer, "cuda", n_samples=n_samples)
 
-model = AutoModelForCausalLM.from_pretrained(
-    model_path, torch_dtype=torch.bfloat16, device_map="auto"
-)
+# model = AutoModelForCausalLM.from_pretrained(
+#     model_path, torch_dtype=torch.bfloat16, device_map="auto"
+# )
 
 if args.smooth:
     act_scales = torch.load(act_scales_path)
