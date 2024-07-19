@@ -324,6 +324,7 @@ class Int8OPTDecoder(OPTPreTrainedModel):
 
     def __init__(self, config):
         super().__init__(config)
+        self._use_flash_attention_2 = False
         self.padding_idx = config.pad_token_id
         self.max_target_positions = config.max_position_embeddings
         self.vocab_size = config.vocab_size
@@ -372,7 +373,7 @@ class Int8OPTDecoder(OPTPreTrainedModel):
 
     get_input_embeddings = OPTDecoder.get_input_embeddings
     set_input_embeddings = OPTDecoder.set_input_embeddings
-    _prepare_decoder_attention_mask = OPTDecoder._prepare_decoder_attention_mask
+    # _prepare_decoder_attention_mask = OPTDecoder._prepare_decoder_attention_mask
     old_forward = OPTDecoder.forward
 
     @staticmethod

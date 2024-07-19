@@ -45,13 +45,13 @@ def main():
     args = parse_args()
     model, tokenizer = build_model_and_tokenizer(args.model_name)
 
-    if not os.path.exists(args.dataset_path):
-        print(f"Cannot find the dataset at {args.dataset_path}")
-        print("Please download the Pile dataset and put the validation set at the path")
-        print(
-            "You can download the validation dataset of the Pile at https://huggingface.co/datasets/mit-han-lab/pile-val-backup/resolve/main/val.jsonl.zst"
-        )
-        raise FileNotFoundError
+    # if not os.path.exists(args.dataset_path):
+    #     print(f"Cannot find the dataset at {args.dataset_path}")
+    #     print("Please download the Pile dataset and put the validation set at the path")
+    #     print(
+    #         "You can download the validation dataset of the Pile at https://huggingface.co/datasets/mit-han-lab/pile-val-backup/resolve/main/val.jsonl.zst"
+    #     )
+    #     raise FileNotFoundError
 
     act_scales = get_act_scales(
         model, tokenizer, args.dataset_path, args.num_samples, args.seq_len
